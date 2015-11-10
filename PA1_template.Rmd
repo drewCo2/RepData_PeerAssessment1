@@ -5,10 +5,17 @@ output:
     keep_md: true
 ---
 
+<!-- Please set your working directory to this script's location :) -->
 
 ## Loading and preprocessing the data
-
-
+```{r}
+DataFilePath<-'activity.csv'
+if(!file.exists(DataFilePath))
+{
+  unzip('activity.zip')
+}
+StepData<-read.csv(DataFilePath)
+```
 
 ## What is mean total number of steps taken per day?
 
