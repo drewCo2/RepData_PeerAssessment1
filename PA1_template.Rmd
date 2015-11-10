@@ -9,6 +9,9 @@ output:
 
 ## Loading and preprocessing the data
 ```{r}
+library(dplyr)
+library(ggplot2)
+
 DataFilePath<-'activity.csv'
 if(!file.exists(DataFilePath))
 {
@@ -19,7 +22,36 @@ StepData<-read.csv(DataFilePath)
 
 ## What is mean total number of steps taken per day?
 
+```{r}
 
+# Remove all observations that don't include steps.
+# We will then group these items into individual days.
+StepOnly<-filter(StepData, !is.na(steps))
+StepsByDay<-group_by(StepOnly, date)
+
+# From there, we can easily summarizethe total number of steps that we taken per day.
+tspd<-summarise(StepsByDay, Total=sum(steps))
+
+stepRange<-dist(range(tspd$Total))[[1]]
+
+binCount<-10
+binWidth<-stepRange / binCount
+
+ggplot(data=tspd, aes(tspd$Total)) + 
+       geom_histogram(binwidth=binWidth, fill="lightBlue", color="darkBlue") +
+       ggtitle("Steps Per Day") +
+       xlab("Total Steps") +
+       ylab("Count")
+
+options(scipen=1, digits=3)
+meanTotalSteps<-mean(tspd$Total)
+medTotalSteps<-median(tspd$Total)
+
+```
+
+Interesting Information:  
+1. Mean Total Steps per Day: **`r meanTotalSteps`**  
+2. Median Total Steps per Day: **`r medTotalSteps`**
 
 ## What is the average daily activity pattern?
 
