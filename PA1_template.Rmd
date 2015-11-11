@@ -11,6 +11,7 @@ output:
 ```{r}
 library(dplyr)
 library(ggplot2)
+library(lubridate)
 
 DataFilePath<-'activity.csv'
 if(!file.exists(DataFilePath))
@@ -55,7 +56,44 @@ Interesting Information:
 
 ## What is the average daily activity pattern?
 
+```{r}
 
+# Group the samples by their interval ID, and then get their mean values.
+ByInterval<-group_by(StepOnly, interval)
+
+# Get mean steps per interval.
+mspi<-summarise(ByInterval, mean=mean(steps))
+
+# Let's create a resonable looking x-axis that better denotes time.
+# We are assuming that the day starts at midnight, and the data seems to support this since there are
+# few steps at this time (i.e. sleeping)
+
+breakCount<-6
+MAX<-2400
+breaks<-seq(from=0, by=(MAX/breakCount), length=breakCount)
+xlabs<-paste(breaks / 100, "00", sep=":")
+
+# Add the final values for the breaks/labels.
+breaks<-append(breaks, 2355)
+xlabs<-append(xlabs, "23:55")
+
+# And now we plot.
+ggplot(data=mspi, aes(x = interval, y=mean)) + 
+       geom_line() +
+       scale_x_discrete(limits=breaks, breaks=breaks, labels=xlabs) +
+       xlab("Time of Day") +
+       ylab("Mean Steps") +
+       ggtitle("Daily Mean of Steps per Interval")
+
+
+# Finally, we can decide which interval has the highest average across all days
+maxIndex = which.max(mspi$mean)
+maxInterval = mspi$interval[[maxIndex]]
+
+
+```
+
+The interval with the highest mean number of steps is: **`r maxInterval`**
 
 ## Imputing missing values
 
