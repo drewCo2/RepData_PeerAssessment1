@@ -74,6 +74,7 @@ breaks<-seq(from=0, by=(MAX/breakCount), length=breakCount)
 xlabs<-paste(breaks / 100, "00", sep=":")
 
 # Add the final values for the breaks/labels.
+# This just makes the axis look a bit nicer.
 breaks<-append(breaks, 2355)
 xlabs<-append(xlabs, "23:55")
 
@@ -97,6 +98,30 @@ The interval with the highest mean number of steps is: **`r maxInterval`**
 
 ## Imputing missing values
 
+```{r}
+naCount<-sum(is.na(StepData$steps))
+```
 
+There are 'r naCount' missing values in the original data set.
+
+<!-- We already have the interval means, so we are going to use those to impute the missing values -->
+```{r}
+
+missing<-which(is.na(StepData$steps))
+mRows<-data.frame(interval = StepData[missing,"interval"])
+mRows$RowIndex<-missing
+
+# Merge in the missing values.
+imputed<-merge(mspi, mRows, by.x="interval", by.y="interval")
+
+# Now we can backfill the missing data in a new data set.
+FixedSteps<-StepData
+
+for (i in 1:nrow(imputed)) {
+  index<-imputed[i,"RowIndex"]
+  FixedSteps[index,"steps"]<-imputed[i,"mean"]
+}
+
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
