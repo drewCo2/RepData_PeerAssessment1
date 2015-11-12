@@ -8,7 +8,9 @@ output:
 <!-- Please set your working directory to this script's location :) -->
 
 ## Loading and preprocessing the data
+
 ```{r}
+
 library(dplyr)
 library(ggplot2)
 library(lubridate)
@@ -19,24 +21,47 @@ if(!file.exists(DataFilePath))
   unzip('activity.zip')
 }
 StepData<-read.csv(DataFilePath)
+
+# General formatting and output options.
+options(scipen=1, digits=3)
+HistBinCount<-10
+
 ```
+
 
 ## What is mean total number of steps taken per day?
 
 ```{r}
 
-# Remove all observations that don't include steps.
-# We will then group these items into individual days.
+# Function for computing total step values..
+# Returns a list with the values we care about.
+ComputeStepInfo<-function(stepData)
+{
+
+  # Remove all observations that don't include steps.
+  # We will then group these items into individual days.
+  perDay<-group_by(stepData, date)
+
+  # From there, we can easily summarizethe total number of steps that we taken per day.
+  tspd<-summarise(perDay, Total=sum(steps))
+
+#  meanTotalSteps<-mean(tspd$Total)
+#  medTotalSteps<-median(tspd$Total)
+
+  list(totalByDay=tspd, mean=mean(tspd$Total), median=median(tspd$Total))  
+}
+
+
 StepOnly<-filter(StepData, !is.na(steps))
-StepsByDay<-group_by(StepOnly, date)
+stepStats<-ComputeStepInfo(StepOnly)
+tspd<-stepStats$totalByDay
 
-# From there, we can easily summarizethe total number of steps that we taken per day.
-tspd<-summarise(StepsByDay, Total=sum(steps))
+# PlotSteps(tspd, "Steps Per Day", HistBinCount)
 
+
+# I wish I could make this into a function....
 stepRange<-dist(range(tspd$Total))[[1]]
-
-binCount<-10
-binWidth<-stepRange / binCount
+binWidth<- stepRange / HistBinCount
 
 ggplot(data=tspd, aes(tspd$Total)) + 
        geom_histogram(binwidth=binWidth, fill="lightBlue", color="darkBlue") +
@@ -44,15 +69,12 @@ ggplot(data=tspd, aes(tspd$Total)) +
        xlab("Total Steps") +
        ylab("Count")
 
-options(scipen=1, digits=3)
-meanTotalSteps<-mean(tspd$Total)
-medTotalSteps<-median(tspd$Total)
 
 ```
 
 Interesting Information:  
-1. Mean Total Steps per Day: **`r meanTotalSteps`**  
-2. Median Total Steps per Day: **`r medTotalSteps`**
+1. Mean Total Steps per Day: **`r stepStats$mean`**  
+2. Median Total Steps per Day: **`r stepStats$median`**
 
 ## What is the average daily activity pattern?
 
@@ -107,21 +129,48 @@ There are 'r naCount' missing values in the original data set.
 <!-- We already have the interval means, so we are going to use those to impute the missing values -->
 ```{r}
 
+# Determine the row indexes of the missing values, and using their interval, lookup 
+# the corresponding mean step value.
 missing<-which(is.na(StepData$steps))
-mRows<-data.frame(interval = StepData[missing,"interval"])
-mRows$RowIndex<-missing
-
-# Merge in the missing values.
-imputed<-merge(mspi, mRows, by.x="interval", by.y="interval")
+match<-StepData[missing,"interval"]
+fillSteps<-mspi[mspi$interval %in% match, "mean"]
 
 # Now we can backfill the missing data in a new data set.
+# We truncate the data a small amount so that we don't have partial steps, i.e. it doesn't make sense for
+# someone to have taken 1.18 steps in a day.
 FixedSteps<-StepData
+FixedSteps[missing,"steps"]<-trunc(fillSteps$mean)
 
-for (i in 1:nrow(imputed)) {
-  index<-imputed[i,"RowIndex"]
-  FixedSteps[index,"steps"]<-imputed[i,"mean"]
-}
+fixedStepStats<-ComputeStepInfo(FixedSteps)
+tspd<-stepStats$totalByDay
+
+# I wish I could make this into a function....
+stepRange<-dist(range(tspd$Total))[[1]]
+binWidth<- stepRange / HistBinCount
+
+ggplot(data=tspd, aes(tspd$Total)) + 
+       geom_histogram(binwidth=binWidth, fill="pink", color="darkRed") +
+       ggtitle("Steps Per Day (fixed)") +
+       xlab("Total Steps") +
+       ylab("Count")
+
+
+
+meanDiff<-stepStats$mean-fixedStepStats$mean
+medianDiff<-stepStats$median-fixedStepStats$median
+
 
 ```
 
+After fixing the missing values, the mean and medians are slightly different:  
+Fixed Mean: **`r fixedStepStats$mean `**  
+Fixed Median: **`r fixedStepStats$median `**
+
+We can easily see that imputing the missing values has had a small impact, but not a significant one:  
+Mean Difference: **`r meanDiff `** (`r (meanDiff/fixedStepStats$mean)*100`%)  
+Median Difference: **`r medianDiff `** (`r (medianDiff/fixedStepStats$median)*100`%)
+
 ## Are there differences in activity patterns between weekdays and weekends?
+
+
+
