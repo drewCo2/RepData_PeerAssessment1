@@ -13,7 +13,8 @@ output:
 
 library(dplyr)
 library(ggplot2)
-library(lubridate)
+# library(lubridate)
+library(grid)
 
 DataFilePath<-'activity.csv'
 if(!file.exists(DataFilePath))
@@ -172,5 +173,45 @@ Median Difference: **`r medianDiff `** (`r (medianDiff/fixedStepStats$median)*10
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
+```{r}
 
+# Determine which entires are weekdays / weekends.
+allDays<-weekdays(strptime(as.character(FixedSteps$date), format="%Y-%m-%d"))
+dayType<-sapply(allDays, function(x) if (x=="Saturday" | x=="Sunday") { "Weekend" } else { "Weekday"}, USE.NAMES=FALSE  )
+dayFactor = as.factor(dayType)
+
+# Apply to our data frame...
+FixedSteps$DayType<-dayFactor
+
+
+
+ComputeAverages<-function(stepData)
+{
+  byInterval<-group_by(stepData, interval)
+  summarise(byInterval, AvgSteps=mean(steps))
+}
+
+# Now split out two new datasets, one for Weekdays, and others for weekends.
+WeekendData<-filter(FixedSteps, DayType == "Weekend")
+WeekdayData<-filter(FixedSteps, DayType == "Weekday")
+
+AvgWeekend<-ComputeAverages(WeekendData)
+AvgWeekday<-ComputeAverages(WeekdayData)
+
+# Put them back together for plotting.  We could leave them seperate for lattice plotting,
+# or base plotting, but I think that ggplot just looks better at the end of the day.
+AvgWeekend$DayType = "Weekend"
+AvgWeekday$DayType = "Weekday"
+Combined<-rbind(AvgWeekend, AvgWeekday)
+
+ggplot(data=Combined, aes(x=interval, y=AvgSteps)) +
+    geom_line() +
+    scale_x_discrete(limits=breaks, breaks=breaks, labels=xlabs) +
+    facet_wrap(~DayType, nrow=1) +
+    theme(panel.margin = unit(2, "lines")) +
+    ylab("Average Steps") +
+    xlab("Time of Day") +
+    ggtitle("Average Steps: Weekday vs. Weekend")
+
+```
 
