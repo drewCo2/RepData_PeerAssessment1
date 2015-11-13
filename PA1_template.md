@@ -1,17 +1,28 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
 <!-- Please set your working directory to this script's location :) -->
 
 ## Loading and preprocessing the data
 
-```{r}
 
+```r
 library(dplyr)
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+## 
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+## 
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```r
 library(ggplot2)
 # library(lubridate)
 library(grid)
@@ -26,14 +37,13 @@ StepData<-read.csv(DataFilePath)
 # General formatting and output options.
 options(scipen=1, digits=3)
 HistBinCount<-10
-
 ```
 
 
 ## What is mean total number of steps taken per day?
 
-```{r}
 
+```r
 # Function for computing total step values..
 # Returns a list with the values we care about.
 ComputeStepInfo<-function(stepData)
@@ -69,18 +79,18 @@ ggplot(data=tspd, aes(tspd$Total)) +
        ggtitle("Steps Per Day") +
        xlab("Total Steps") +
        ylab("Count")
-
-
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-2-1.png) 
+
 Interesting Information:  
-1. Mean Total Steps per Day: **`r stepStats$mean`**  
-2. Median Total Steps per Day: **`r stepStats$median`**
+1. Mean Total Steps per Day: **10766.189**  
+2. Median Total Steps per Day: **10765**
 
 ## What is the average daily activity pattern?
 
-```{r}
 
+```r
 # Group the samples by their interval ID, and then get their mean values.
 ByInterval<-group_by(StepOnly, interval)
 
@@ -108,28 +118,30 @@ ggplot(data=mspi, aes(x = interval, y=mean)) +
        xlab("Time of Day") +
        ylab("Mean Steps") +
        ggtitle("Daily Mean of Steps per Interval")
+```
 
+![](PA1_template_files/figure-html/unnamed-chunk-3-1.png) 
 
+```r
 # Finally, we can decide which interval has the highest average across all days
 maxIndex = which.max(mspi$mean)
 maxInterval = mspi$interval[[maxIndex]]
-
-
 ```
 
-The interval with the highest mean number of steps is: **`r maxInterval`**
+The interval with the highest mean number of steps is: **835**
 
 ## Imputing missing values
 
-```{r}
+
+```r
 naCount<-sum(is.na(StepData$steps))
 ```
 
-There are `r naCount` missing values in the original data set.
+There are 2304 missing values in the original data set.
 
 <!-- We already have the interval means, so we are going to use those to impute the missing values -->
-```{r}
 
+```r
 # Determine the row indexes of the missing values, and using their interval, lookup 
 # the corresponding mean step value.  we are using the mean values that we computed from the previous
 # step to fill in the missing data.
@@ -154,27 +166,27 @@ ggplot(data=tspd, aes(tspd$Total)) +
        ggtitle("Steps Per Day (fixed)") +
        xlab("Total Steps") +
        ylab("Count")
+```
 
+![](PA1_template_files/figure-html/unnamed-chunk-5-1.png) 
 
-
+```r
 meanDiff<-stepStats$mean-fixedStepStats$mean
 medianDiff<-stepStats$median-fixedStepStats$median
-
-
 ```
 
 After fixing the missing values, the mean and medians are slightly different:  
-Fixed Mean: **`r fixedStepStats$mean `**  
-Fixed Median: **`r fixedStepStats$median `**
+Fixed Mean: **10749.77**  
+Fixed Median: **10641**
 
 We can easily see that imputing the missing values has had a small impact, but not a significant one:  
-Mean Difference: **`r meanDiff `** (`r (meanDiff/fixedStepStats$mean)*100`%)  
-Median Difference: **`r medianDiff `** (`r (medianDiff/fixedStepStats$median)*100`%)
+Mean Difference: **16.418** (0.153%)  
+Median Difference: **124** (1.165%)
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
-```{r}
 
+```r
 # Determine which entires are weekdays / weekends.
 allDays<-weekdays(strptime(as.character(FixedSteps$date), format="%Y-%m-%d"))
 dayType<-sapply(allDays, function(x) if (x=="Saturday" | x=="Sunday") { "Weekend" } else { "Weekday"}, USE.NAMES=FALSE  )
@@ -212,6 +224,7 @@ ggplot(data=Combined, aes(x=interval, y=AvgSteps)) +
     ylab("Average Steps") +
     xlab("Time of Day") +
     ggtitle("Average Steps: Weekday vs. Weekend")
-
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-6-1.png) 
 
