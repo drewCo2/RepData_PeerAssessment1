@@ -31,7 +31,7 @@ HistBinCount<-10
 
 ## What is mean total number of steps taken per day?
 
-```{r echo=TRUE, fig.width=8, fig.height=6}
+```{r echo=TRUE, fig.width=8, fig.height=6 }
 
 # Function for computing total step values..
 # Returns a list with the values we care about.
