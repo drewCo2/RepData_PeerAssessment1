@@ -2,7 +2,7 @@
 title: "Reproducible Research: Peer Assessment 1"
 output: 
   html_document:
-    keep_md: true
+    keep_md: yes
 ---
 
 <!-- Please set your working directory to this script's location :) -->
@@ -13,7 +13,6 @@ output:
 
 library(dplyr)
 library(ggplot2)
-# library(lubridate)
 library(grid)
 
 DataFilePath<-'activity.csv'
@@ -38,7 +37,6 @@ HistBinCount<-10
 # Returns a list with the values we care about.
 ComputeStepInfo<-function(stepData)
 {
-
   # Remove all observations that don't include steps.
   # We will then group these items into individual days.
   perDay<-group_by(stepData, date)
@@ -46,21 +44,15 @@ ComputeStepInfo<-function(stepData)
   # From there, we can easily summarizethe total number of steps that we taken per day.
   tspd<-summarise(perDay, Total=sum(steps))
 
-#  meanTotalSteps<-mean(tspd$Total)
-#  medTotalSteps<-median(tspd$Total)
-
   list(totalByDay=tspd, mean=mean(tspd$Total), median=median(tspd$Total))  
 }
 
-
+# Remove all rows that don't have step information before computing totals, etc.
 StepOnly<-filter(StepData, !is.na(steps))
 stepStats<-ComputeStepInfo(StepOnly)
 tspd<-stepStats$totalByDay
 
-# PlotSteps(tspd, "Steps Per Day", HistBinCount)
 
-
-# I wish I could make this into a function....
 stepRange<-dist(range(tspd$Total))[[1]]
 binWidth<- stepRange / HistBinCount
 
@@ -89,7 +81,7 @@ mspi<-summarise(ByInterval, mean=mean(steps))
 
 # Let's create a resonable looking x-axis that better denotes time.
 # We are assuming that the day starts at midnight, and the data seems to support this since there are
-# few steps at this time (i.e. sleeping)
+# few steps at this time (i.e. people are sleeping)
 
 breakCount<-6
 MAX<-2400
@@ -131,7 +123,7 @@ There are `r naCount` missing values in the original data set.
 ```{r}
 
 # Determine the row indexes of the missing values, and using their interval, lookup 
-# the corresponding mean step value.  we are using the mean values that we computed from the previous
+# the corresponding mean step value.  We are using the mean values that we computed from the previous
 # step to fill in the missing data.
 missing<-which(is.na(StepData$steps))
 match<-StepData[missing,"interval"]
@@ -175,7 +167,7 @@ Median Difference: **`r medianDiff `** (`r (medianDiff/fixedStepStats$median)*10
 
 ```{r}
 
-# Determine which entires are weekdays / weekends.
+# Determine which entries are weekdays / weekends.
 allDays<-weekdays(strptime(as.character(FixedSteps$date), format="%Y-%m-%d"))
 dayType<-sapply(allDays, function(x) if (x=="Saturday" | x=="Sunday") { "Weekend" } else { "Weekday"}, USE.NAMES=FALSE  )
 dayFactor = as.factor(dayType)

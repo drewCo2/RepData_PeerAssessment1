@@ -79,7 +79,6 @@ img {
 ## 
 ##     intersect, setdiff, setequal, union</code></pre>
 <pre class="r"><code>library(ggplot2)
-# library(lubridate)
 library(grid)
 
 DataFilePath&lt;-'activity.csv'
@@ -99,7 +98,6 @@ HistBinCount&lt;-10</code></pre>
 # Returns a list with the values we care about.
 ComputeStepInfo&lt;-function(stepData)
 {
-
   # Remove all observations that don't include steps.
   # We will then group these items into individual days.
   perDay&lt;-group_by(stepData, date)
@@ -107,21 +105,15 @@ ComputeStepInfo&lt;-function(stepData)
   # From there, we can easily summarizethe total number of steps that we taken per day.
   tspd&lt;-summarise(perDay, Total=sum(steps))
 
-#  meanTotalSteps&lt;-mean(tspd$Total)
-#  medTotalSteps&lt;-median(tspd$Total)
-
   list(totalByDay=tspd, mean=mean(tspd$Total), median=median(tspd$Total))  
 }
 
-
+# Remove all rows that don't have step information before computing totals, etc.
 StepOnly&lt;-filter(StepData, !is.na(steps))
 stepStats&lt;-ComputeStepInfo(StepOnly)
 tspd&lt;-stepStats$totalByDay
 
-# PlotSteps(tspd, &quot;Steps Per Day&quot;, HistBinCount)
 
-
-# I wish I could make this into a function....
 stepRange&lt;-dist(range(tspd$Total))[[1]]
 binWidth&lt;- stepRange / HistBinCount
 
@@ -143,7 +135,7 @@ mspi&lt;-summarise(ByInterval, mean=mean(steps))
 
 # Let's create a resonable looking x-axis that better denotes time.
 # We are assuming that the day starts at midnight, and the data seems to support this since there are
-# few steps at this time (i.e. sleeping)
+# few steps at this time (i.e. people are sleeping)
 
 breakCount&lt;-6
 MAX&lt;-2400
@@ -174,7 +166,7 @@ maxInterval = mspi$interval[[maxIndex]]</code></pre>
 <p>There are 2304 missing values in the original data set.</p>
 <!-- We already have the interval means, so we are going to use those to impute the missing values -->
 <pre class="r"><code># Determine the row indexes of the missing values, and using their interval, lookup 
-# the corresponding mean step value.  we are using the mean values that we computed from the previous
+# the corresponding mean step value.  We are using the mean values that we computed from the previous
 # step to fill in the missing data.
 missing&lt;-which(is.na(StepData$steps))
 match&lt;-StepData[missing,&quot;interval&quot;]
@@ -205,7 +197,7 @@ medianDiff&lt;-stepStats$median-fixedStepStats$median</code></pre>
 </div>
 <div id="are-there-differences-in-activity-patterns-between-weekdays-and-weekends" class="section level2">
 <h2>Are there differences in activity patterns between weekdays and weekends?</h2>
-<pre class="r"><code># Determine which entires are weekdays / weekends.
+<pre class="r"><code># Determine which entries are weekdays / weekends.
 allDays&lt;-weekdays(strptime(as.character(FixedSteps$date), format=&quot;%Y-%m-%d&quot;))
 dayType&lt;-sapply(allDays, function(x) if (x==&quot;Saturday&quot; | x==&quot;Sunday&quot;) { &quot;Weekend&quot; } else { &quot;Weekday&quot;}, USE.NAMES=FALSE  )
 dayFactor = as.factor(dayType)
