@@ -65,10 +65,12 @@ tspd<-stepStats$totalByDay
 
 
 stepRange<-dist(range(tspd$Total))[[1]]
-binWidth<- stepRange / HistBinCount
+binMax = (trunc(stepRange / 1000) + sign(stepRange %% 1000)) * 1000
+binBy = binMax / HistBinCount
 
+hBreaks<-seq(0, binMax, binBy)
 ggplot(data=tspd, aes(tspd$Total)) + 
-       geom_histogram(binwidth=binWidth, fill="lightBlue", color="darkBlue") +
+       geom_histogram(breaks=hBreaks, fill="lightBlue", color="darkBlue") +
        ggtitle("Steps Per Day") +
        xlab("Total Steps") +
        ylab("Count")
@@ -132,7 +134,8 @@ naCount<-sum(is.na(StepData$steps))
 
 There are 2304 missing values in the original data set.
 
-<!-- We already have the interval means, so we are going to use those to impute the missing values -->
+To impute the missing values from the data, we will use the step means for each interval that we computed in a previous step.  We will determine which rows have missing step information, and use their interval number to assign the missing value.
+
 
 ```r
 # Determine the row indexes of the missing values, and using their interval, lookup 
@@ -151,12 +154,15 @@ FixedSteps[missing,"steps"]<-trunc(fillSteps$mean)
 fixedStepStats<-ComputeStepInfo(FixedSteps)
 tspd<-stepStats$totalByDay
 
-stepRange<-dist(range(tspd$Total))[[1]]
-binWidth<- stepRange / HistBinCount
 
+stepRange<-dist(range(tspd$Total))[[1]]
+binMax = (trunc(stepRange / 1000) + sign(stepRange %% 1000)) * 1000
+binBy = binMax / HistBinCount
+
+hBreaks<-seq(0, binMax, binBy)
 ggplot(data=tspd, aes(tspd$Total)) + 
-       geom_histogram(binwidth=binWidth, fill="pink", color="darkRed") +
-       ggtitle("Steps Per Day (fixed)") +
+       geom_histogram(breaks=hBreaks, fill="pink", color="darkRed") +
+       ggtitle("Steps Per Day (imputed)") +
        xlab("Total Steps") +
        ylab("Count")
 ```

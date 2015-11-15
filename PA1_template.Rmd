@@ -32,7 +32,7 @@ HistBinCount<-10
 
 ## What is mean total number of steps taken per day?
 
-```{r echo=TRUE, fig.width=8, fig.height=6 }
+```{r echo=TRUE, fig.width=6, fig.height=4 }
 
 # Function for computing total step values..
 # Returns a list with the values we care about.
@@ -55,10 +55,12 @@ tspd<-stepStats$totalByDay
 
 
 stepRange<-dist(range(tspd$Total))[[1]]
-binWidth<- stepRange / HistBinCount
+binMax = (trunc(stepRange / 1000) + sign(stepRange %% 1000)) * 1000
+binBy = binMax / HistBinCount
 
+hBreaks<-seq(0, binMax, binBy)
 ggplot(data=tspd, aes(tspd$Total)) + 
-       geom_histogram(binwidth=binWidth, fill="lightBlue", color="darkBlue") +
+       geom_histogram(breaks=hBreaks, fill="lightBlue", color="darkBlue") +
        ggtitle("Steps Per Day") +
        xlab("Total Steps") +
        ylab("Count")
@@ -72,7 +74,7 @@ Interesting Information:
 
 ## What is the average daily activity pattern?
 
-```{r echo=TRUE, fig.width=8, fig.height=6}
+```{r echo=TRUE, fig.width=6, fig.height=4}
 
 # Group the samples by their interval ID, and then get their mean values.
 ByInterval<-group_by(StepOnly, interval)
@@ -114,14 +116,15 @@ The interval with the highest mean number of steps is: **`r maxInterval`**
 
 ## Imputing missing values
 
-```{r echo=TRUE, fig.width=8, fig.height=6}
+```{r echo=TRUE, fig.width=6, fig.height=4}
 naCount<-sum(is.na(StepData$steps))
 ```
 
 There are `r naCount` missing values in the original data set.
 
-<!-- We already have the interval means, so we are going to use those to impute the missing values -->
-```{r echo=TRUE, fig.width=8, fig.height=6}
+To impute the missing values from the data, we will use the step means for each interval that we computed in a previous step.  We will determine which rows have missing step information, and use their interval number to assign the missing value.
+
+```{r echo=TRUE, fig.width=6, fig.height=4}
 
 # Determine the row indexes of the missing values, and using their interval, lookup 
 # the corresponding mean step value.  We are using the mean values that we computed from the previous
@@ -139,15 +142,17 @@ FixedSteps[missing,"steps"]<-trunc(fillSteps$mean)
 fixedStepStats<-ComputeStepInfo(FixedSteps)
 tspd<-stepStats$totalByDay
 
-stepRange<-dist(range(tspd$Total))[[1]]
-binWidth<- stepRange / HistBinCount
 
+stepRange<-dist(range(tspd$Total))[[1]]
+binMax = (trunc(stepRange / 1000) + sign(stepRange %% 1000)) * 1000
+binBy = binMax / HistBinCount
+
+hBreaks<-seq(0, binMax, binBy)
 ggplot(data=tspd, aes(tspd$Total)) + 
-       geom_histogram(binwidth=binWidth, fill="pink", color="darkRed") +
-       ggtitle("Steps Per Day (fixed)") +
+       geom_histogram(breaks=hBreaks, fill="pink", color="darkRed") +
+       ggtitle("Steps Per Day (imputed)") +
        xlab("Total Steps") +
        ylab("Count")
-
 
 
 meanDiff<-stepStats$mean-fixedStepStats$mean
@@ -166,7 +171,7 @@ Median Difference: **`r medianDiff `** (`r (medianDiff/fixedStepStats$median)*10
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
-```{r echo=TRUE, fig.width=8, fig.height=6}
+```{r echo=TRUE, fig.width=6, fig.height=4}
 
 # Determine which entries are weekdays / weekends.
 allDays<-weekdays(strptime(as.character(FixedSteps$date), format="%Y-%m-%d"))
