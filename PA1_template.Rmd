@@ -31,7 +31,7 @@ HistBinCount<-10
 
 ## What is mean total number of steps taken per day?
 
-```{r}
+```{r echo=TRUE}
 
 # Function for computing total step values..
 # Returns a list with the values we care about.
