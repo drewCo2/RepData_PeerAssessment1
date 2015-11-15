@@ -26,6 +26,7 @@ library(dplyr)
 library(ggplot2)
 library(grid)
 
+
 DataFilePath<-'activity.csv'
 if(!file.exists(DataFilePath))
 {
